@@ -27,10 +27,14 @@ contract Ballot {
     // A dynamically-sized array of `Proposal` structs.
     Proposal[] public proposals;
 
+    // start time
+    uint public startTime;
+
     /// Create a new ballot to choose one of `proposalNames`.
     constructor(bytes32[] memory proposalNames) {
         chairperson = msg.sender;
         voters[chairperson].weight = 1;
+        startTime = block.timestamp;
 
         // For each of the provided proposal names,
         // create a new proposal object and add it
@@ -109,10 +113,15 @@ contract Ballot {
             delegate_.weight += sender.weight;
         }
     }
+    /// Modifier that will check if the voting period is over.
+    modifier voteEnded(){
+        require(block.timestamp < startTime + 5 minutes, "The voting period is over");
+        _;
+    }
 
     /// Give your vote (including votes delegated to you)
     /// to proposal `proposals[proposal].name`.
-    function vote(uint proposal) external {
+    function vote(uint proposal) external voteEnded {
         Voter storage sender = voters[msg.sender];
         require(sender.weight != 0, "Has no right to vote");
         require(!sender.voted, "Already voted.");
